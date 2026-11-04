@@ -1,0 +1,65 @@
+name: Stage verified 0.2.0 preview installers
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: stage-preview-020
+  cancel-in-progress: false
+jobs:
+  stage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Download exact verified build archives
+        env:
+          MAC_ARCHIVE_URL: ${{ secrets.TARCA_020_MAC_ARCHIVE_URL }}
+          WINDOWS_ARCHIVE_URL: ${{ secrets.TARCA_020_WINDOWS_ARCHIVE_URL }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$MAC_ARCHIVE_URL"
+          test -n "$WINDOWS_ARCHIVE_URL"
+          curl --fail --silent --show-error --location --retry 3 "$MAC_ARCHIVE_URL" -o mac.zip &
+          mac_pid=$!
+          curl --fail --silent --show-error --location --retry 3 "$WINDOWS_ARCHIVE_URL" -o windows.zip
+          wait "$mac_pid"
+          echo '61ab735221630acd0e378e4cfad6177e88df774d02c9423de65a16833b550148  mac.zip' | sha256sum --check
+          echo '91656118a47a631e1e7a3f1c360475e2096890bbe88de0dacf1dfcec36311f75  windows.zip' | sha256sum --check
+      - name: Extract and verify the four reviewed installers
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib,pathlib,zipfile
+          expected={
+            'Tarca-0.2.0-mac-arm64.dmg':'6a2ca65024fe3743b9353619daf043d4a59ccc1b24d502d8600bd957fdc7d67b',
+            'Tarca-0.2.0-mac-x64.dmg':'c5295d919139d39f61620452ea2d2742b30658ccb719f4528c2b0cacc0178260',
+            'Tarca-0.2.0-win-arm64.exe':'d736c66c762c3d96b2fe4e59ec3adf90768aca448bb778a8cd42a0880e07ffae',
+            'Tarca-0.2.0-win-x64.exe':'0f8a7f8ff5fe303c20669d5b1c9f32c93f39601a1c3bf356177cd0a501addbe9'
+          }
+          out=pathlib.Path('verified');out.mkdir()
+          found=set()
+          for archive in ['mac.zip','windows.zip']:
+            with zipfile.ZipFile(archive) as z:
+              for name in expected:
+                if name in z.namelist():
+                  assert name not in found
+                  data=z.read(name)
+                  assert hashlib.sha256(data).hexdigest()==expected[name],name
+                  (out/name).write_bytes(data);found.add(name)
+          assert found==set(expected)
+          (out/'SHA256SUMS.txt').write_text(''.join(expected[name]+'  '+name+'\n' for name in ['Tarca-0.2.0-mac-arm64.dmg','Tarca-0.2.0-mac-x64.dmg','Tarca-0.2.0-win-x64.exe','Tarca-0.2.0-win-arm64.exe']))
+          print('Four installers match reviewed source 864dd175f89e76063e19d36f4250b9ea4f1f522d')
+          PY
+      - name: Upload to the existing draft preview
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(gh api repos/brysonisbell/tarca-desktop-releases/releases/434265772 --jq '.draft')" = true
+          test "$(gh api repos/brysonisbell/tarca-desktop-releases/releases/434265772 --jq '.tag_name')" = v0.2.0-preview
+          gh release upload v0.2.0-preview verified/* --repo brysonisbell/tarca-desktop-releases
+          gh api repos/brysonisbell/tarca-desktop-releases/releases/434265772/assets --jq '.[] | {name,size,digest,state}'
+          echo 'Staged only: publication requires final asset verification.' >> "$GITHUB_STEP_SUMMARY"
