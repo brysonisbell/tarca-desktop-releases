@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "version": "0.3.0",
+  "sourceRepository": "brysonisbell/tarca",
+  "destinationRepository": "brysonisbell/tarca-desktop-releases",
+  "sourceSha": "3058e51deb6ecced6977e57cc21d45d669b33e24",
+  "sourceRunId": 41900117090,
+  "draftReleaseId": 434380378,
+  "tag": "v0.3.0-preview",
+  "archives": [
+    {
+      "label": "mac",
+      "id": 13357623405,
+      "bytes": 489462861,
+      "sha256": "294141a5cab53eb7a6eeff8232d6c9395b36e98915899732f94827a03d89d0a1"
+    },
+    {
+      "label": "windows",
+      "id": 13357139057,
+      "bytes": 470580830,
+      "sha256": "a98cee94cd2a4860aa20def590f22426e977aceea8bc98d5debabfa63e1392b5"
+    }
+  ],
+  "installers": [
+    {
+      "name": "Tarca-0.3.0-mac-arm64.dmg",
+      "bytes": 121309210,
+      "sha256": "dc53f5338d0cf598cf81125e371aa24c06a5922aa752eda581312c1817f11113",
+      "sourceArtifactId": 13357623405,
+      "sourceSha": "3058e51deb6ecced6977e57cc21d45d669b33e24",
+      "sourceRunId": 41900117090
+    },
+    {
+      "name": "Tarca-0.3.0-mac-x64.dmg",
+      "bytes": 126954412,
+      "sha256": "adac9409a67d3a0fe6c44590571d0e1c789d0c8c44d81c14892a9ae5ef2aa567",
+      "sourceArtifactId": 13357623405,
+      "sourceSha": "3058e51deb6ecced6977e57cc21d45d669b33e24",
+      "sourceRunId": 41900117090
+    },
+    {
+      "name": "Tarca-0.3.0-win-x64.exe",
+      "bytes": 120648267,
+      "sha256": "b7da96bda4f67c0363584b7c4a5d88b612f7b518252092219a80f7744a447109",
+      "sourceArtifactId": 13357139057,
+      "sourceSha": "3058e51deb6ecced6977e57cc21d45d669b33e24",
+      "sourceRunId": 41900117090
+    },
+    {
+      "name": "Tarca-0.3.0-win-arm64.exe",
+      "bytes": 114930252,
+      "sha256": "ed09cc9e7baa7e71a0cd23310b83cc8d1cfc6eb7d8ba26d05528d60d81b71f59",
+      "sourceArtifactId": 13357139057,
+      "sourceSha": "3058e51deb6ecced6977e57cc21d45d669b33e24",
+      "sourceRunId": 41900117090
+    }
+  ]
+}
