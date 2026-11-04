@@ -1,0 +1,43 @@
+name: Stage verified desktop preview installers
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Reviewed preview version (for example 0.3.0)
+        required: true
+        type: string
+permissions:
+  contents: write
+concurrency:
+  group: stage-desktop-preview
+  cancel-in-progress: false
+jobs:
+  stage:
+    if: github.repository == 'brysonisbell/tarca-desktop-releases' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PREVIEW_VERSION: ${{ inputs.version }}
+    steps:
+      - name: Read the reviewed public release tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_SHA" =~ ^[a-f0-9]{40}$ ]]
+          git init .
+          git remote add origin https://github.com/brysonisbell/tarca-desktop-releases.git
+          git -c credential.helper= fetch --depth=1 origin "$GITHUB_SHA"
+          git checkout --detach FETCH_HEAD
+      - name: Validate the complete release manifest
+        run: python3 scripts/stage-preview.py validate --version "$PREVIEW_VERSION"
+      - name: Download and verify the two private build archives
+        env:
+          TARCA_PREVIEW_MAC_ARCHIVE_URL: ${{ secrets.TARCA_PREVIEW_MAC_ARCHIVE_URL }}
+          TARCA_PREVIEW_WINDOWS_ARCHIVE_URL: ${{ secrets.TARCA_PREVIEW_WINDOWS_ARCHIVE_URL }}
+        run: python3 scripts/stage-preview.py fetch --version "$PREVIEW_VERSION"
+      - name: Stage only the four reviewed installers in the existing draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/stage-preview.py upload --version "$PREVIEW_VERSION"
+      - name: Record the remaining publication step
+        run: echo 'Installers staged and verified. The release remains a draft; publication is a separate action.' >> "$GITHUB_STEP_SUMMARY"
